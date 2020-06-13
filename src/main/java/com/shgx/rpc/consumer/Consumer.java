@@ -1,6 +1,6 @@
 package com.shgx.rpc.consumer;
 
-import com.shgx.rpc.commons.GenerateUtils;
+import com.shgx.rpc.commons.ProviderUtils;
 import com.shgx.rpc.ptotocol.Request;
 import com.shgx.rpc.ptotocol.Response;
 import com.shgx.rpc.ptotocol.RpcDecoder;
@@ -32,6 +32,7 @@ public class Consumer extends SimpleChannelInboundHandler<Response> {
         this.serviceRegister = serviceRegister;
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> T create(Class<T> interfaceClass, String serviceVersion, ServiceRegistry serviceRegistry) {
         return (T)Proxy.newProxyInstance(interfaceClass.getClassLoader(),
                 new Class<?>[]{interfaceClass},
@@ -53,13 +54,13 @@ public class Consumer extends SimpleChannelInboundHandler<Response> {
                                     .addLast(Consumer.this);
                         }
                     });
-            String targetService = GenerateUtils.generateKey(request.getClassName(), request.getVersion());
+            String targetService = ProviderUtils.generateKey(request.getClassName(), request.getVersion());
             ServiceModel serviceModel = serviceRegister.discovery(targetService);
             if(serviceModel == null){
                 throw new RuntimeException("no service for"+ targetService);
             }
             log.debug("discovery for {}-{}", targetService, serviceModel.getServiceName());
-            final ChannelFuture future = bootstrap.connect(serviceModel.getAddress(), serviceModel.getPort()).sync();
+            final ChannelFuture future = bootstrap.connect(serviceModel.getAddress(), serviceModel.getServicePort()).sync();
 
             future.addListener((ChannelFutureListener) arg0 -> {
                 if(future.isSuccess()){
@@ -88,7 +89,7 @@ public class Consumer extends SimpleChannelInboundHandler<Response> {
         this.response = response;
 
         synchronized (obj){
-            obj.notify();
+            obj.notifyAll();
         }
     }
 

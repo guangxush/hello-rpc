@@ -1,47 +1,52 @@
 package com.shgx.rpc.register;
 
-import lombok.Builder;
+import lombok.Data;
 
 /**
  * @author: guangxush
  * @create: 2020/06/11
  */
-@Builder
+
+@Data
 public class ServiceModel {
     private String serviceName;
     private String serviceVersion;
     private String address;
-    private int port;
+    private int servicePort;
 
-    public String getServiceName() {
-        return serviceName;
+    public static ServiceModel builder() {
+        return new ServiceModel();
     }
 
-    public void setServiceName(String serviceName) {
-        this.serviceName = serviceName;
+    public ServiceModel serviceName(String serviceName) {
+        this.setServiceName(serviceName);
+        return this;
     }
 
-    public String getServiceVersion() {
-        return serviceVersion;
+
+    public ServiceModel servicePort(int servicePort) {
+        this.servicePort = servicePort;
+        return this;
     }
 
-    public void setServiceVersion(String serviceVersion) {
-        this.serviceVersion = serviceVersion;
-    }
 
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
+    public ServiceModel address(String address) {
         this.address = address;
+        return this;
     }
 
-    public int getPort() {
-        return port;
+    public ServiceModel serviceVersion(String serviceVersion) {
+        this.serviceVersion = serviceVersion;
+        return this;
     }
 
-    public void setPort(int port) {
-        this.port = port;
+    @Override
+    public String toString() {
+        return "ServiceModel{" +
+                "serviceName='" + serviceName + '\'' +
+                ", serviceVersion='" + serviceVersion + '\'' +
+                ", address='" + address + '\'' +
+                ", port=" + servicePort +
+                '}';
     }
 }

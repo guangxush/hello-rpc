@@ -1,6 +1,6 @@
 package com.shgx.rpc.registry;
 
-import com.shgx.rpc.commons.ServiceRegistryEnum;
+import com.shgx.rpc.commons.ServiceRegistryType;
 import com.shgx.rpc.register.ServiceModel;
 import com.shgx.rpc.register.ServiceRegistry;
 import com.shgx.rpc.register.ServiceRegistryFactory;
@@ -21,7 +21,7 @@ public class ServiceDiscoveryTest {
 
     @Before
     public void init() throws Exception {
-        serviceRegistry = ServiceRegistryFactory.getInstance(ServiceRegistryEnum.zookeeper, ADDRESS);
+        serviceRegistry = ServiceRegistryFactory.getInstance(ServiceRegistryType.zookeeper, ADDRESS);
     }
 
     @After
@@ -34,21 +34,21 @@ public class ServiceDiscoveryTest {
         ServiceModel test11 = ServiceModel
                 .builder()
                 .serviceName("test1")
-                .port(8080)
+                .servicePort(8088)
                 .serviceVersion("1.0.0")
-                .address("127.0.0.1").build();
+                .address("127.0.0.1");
         ServiceModel test22 = ServiceModel
                 .builder()
                 .serviceName("test2")
-                .port(8080)
+                .servicePort(8088)
                 .serviceVersion("1.0.0")
-                .address("127.0.0.2").build();
+                .address("127.0.0.2");
         ServiceModel test33 = ServiceModel
                 .builder()
                 .serviceName("test3")
-                .port(8080)
+                .servicePort(8088)
                 .serviceVersion("1.0.0")
-                .address("127.0.0.3").build();
+                .address("127.0.0.3");
 
         serviceRegistry.register(test11);
         serviceRegistry.register(test22);
@@ -73,15 +73,15 @@ public class ServiceDiscoveryTest {
         serviceRegistry.register(ServiceModel
                 .builder()
                 .serviceName("test")
-                .port(8080)
+                .servicePort(8088)
                 .serviceVersion("1.0.0")
-                .address("127.0.0.1").build());
+                .address("127.0.0.1"));
         serviceRegistry.register(ServiceModel
                 .builder()
                 .serviceName("test")
-                .port(8080)
+                .servicePort(8088)
                 .serviceVersion("1.0.0")
-                .address("127.0.0.1").build());
+                .address("127.0.0.1"));
     }
 
     @Test
@@ -89,23 +89,23 @@ public class ServiceDiscoveryTest {
         serviceRegistry.register(ServiceModel
                 .builder()
                 .serviceName("test")
-                .port(8080)
+                .servicePort(8088)
                 .serviceVersion("1.0.0")
-                .address("127.0.0.1").build());
+                .address("127.0.0.1"));
 
         serviceRegistry.register(ServiceModel
                 .builder()
                 .serviceName("test")
-                .port(8080)
+                .servicePort(8088)
                 .serviceVersion("1.0.0")
-                .address("127.0.0.2").build());
+                .address("127.0.0.2"));
 
         serviceRegistry.register(ServiceModel
                 .builder()
                 .serviceName("test")
-                .port(8080)
+                .servicePort(8088)
                 .serviceVersion("1.0.0")
-                .address("127.0.0.3").build());
+                .address("127.0.0.3"));
 
 
         ServiceModel test1 = serviceRegistry.discovery("test:1.0.0");

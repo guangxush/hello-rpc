@@ -1,12 +1,13 @@
 package com.shgx.rpc.ptotocol;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 /**
  * @author: guangxush
  * @create: 2020/06/11
  */
-public class Request {
+public class Request implements Serializable {
     private String requestId;
     private String className;
     private String methodName;

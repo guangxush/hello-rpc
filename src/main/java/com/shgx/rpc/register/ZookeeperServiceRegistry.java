@@ -1,7 +1,7 @@
 package com.shgx.rpc.register;
 
 import com.google.common.collect.Lists;
-import com.shgx.rpc.commons.GenerateUtils;
+import com.shgx.rpc.commons.ProviderUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
@@ -45,9 +45,9 @@ public class ZookeeperServiceRegistry implements ServiceRegistry {
     @Override
     public void register(ServiceModel serviceModel) throws Exception {
         ServiceInstance<ServiceModel> serviceInstance = ServiceInstance.<ServiceModel>builder().
-                name(GenerateUtils.generateKey(serviceModel.getServiceName(), serviceModel.getServiceVersion()))
+                name(ProviderUtils.generateKey(serviceModel.getServiceName(), serviceModel.getServiceVersion()))
                 .address(serviceModel.getAddress())
-                .port(serviceModel.getPort())
+                .port(serviceModel.getServicePort())
                 .payload(serviceModel)
                 .uriSpec(new UriSpec("{scheme}://{address}:{port}"))
                 .build();
@@ -57,9 +57,9 @@ public class ZookeeperServiceRegistry implements ServiceRegistry {
     @Override
     public void unRegister(ServiceModel serviceModel) throws Exception {
         ServiceInstance<ServiceModel> serviceInstance = ServiceInstance.<ServiceModel>builder().
-                name(GenerateUtils.generateKey(serviceModel.getServiceName(), serviceModel.getServiceVersion()))
+                name(ProviderUtils.generateKey(serviceModel.getServiceName(), serviceModel.getServiceVersion()))
                 .address(serviceModel.getAddress())
-                .port(serviceModel.getPort())
+                .port(serviceModel.getServicePort())
                 .payload(serviceModel)
                 .uriSpec(new UriSpec("{scheme}://{address}:{port}"))
                 .build();

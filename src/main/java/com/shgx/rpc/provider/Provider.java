@@ -1,7 +1,7 @@
 package com.shgx.rpc.provider;
 
 import com.shgx.rpc.annotation.MyProvider;
-import com.shgx.rpc.commons.GenerateUtils;
+import com.shgx.rpc.commons.ProviderUtils;
 import com.shgx.rpc.ptotocol.RpcDecoder;
 import com.shgx.rpc.ptotocol.RpcEncoder;
 import com.shgx.rpc.register.ServiceModel;
@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -30,14 +31,12 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static sun.jvm.hotspot.runtime.PerfMemory.start;
-
 /**
  * @author: guangxush
  * @create: 2020/06/11
  */
 @Slf4j
-public class Provider implements ApplicationContextAware, InitializingBean {
+public class Provider implements BeanPostProcessor, InitializingBean {
 
     private String serverAddress;
 
@@ -88,35 +87,11 @@ public class Provider implements ApplicationContextAware, InitializingBean {
         ).start();
     }
 
-    @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        Map<String, Object> providerMap = applicationContext.getBeansWithAnnotation(MyProvider.class);
-        if (MapUtils.isNotEmpty(providerMap)) {
-            for (Object providerBean : providerMap.values()) {
-                MyProvider myProvider = providerBean.getClass().getAnnotation(MyProvider.class);
-                String serviceName = myProvider.serviceInterface().getName();
-                String version = myProvider.version();
-                String providerKey = GenerateUtils.generateKey(serviceName, version);
-                handlerMap.put(providerKey, providerBean);
 
-                String[] address = serverAddress.split(":");
-                String host = address[0];
-                int port = Integer.parseInt(address[1]);
-                ServiceModel serviceModel = ServiceModel.builder()
-                        .address(host)
-                        .serviceName(serviceName)
-                        .port(port)
-                        .serviceVersion(version)
-                        .build();
-                try {
-                    serviceRegistry.register(serviceModel);
-                    log.debug("register service...", serviceModel.toString());
-                } catch (Exception e) {
-                    log.error("register fail", serviceModel.toString(), e);
-                }
-            }
-        }
     }
+
+
 
 
     public void start() throws InterruptedException {
@@ -149,16 +124,15 @@ public class Provider implements ApplicationContextAware, InitializingBean {
         MyProvider myProvider = providerBean.getClass().getAnnotation(MyProvider.class);
         String serviceName = myProvider.serviceInterface().getName();
         String version = myProvider.version();
-        String providerKey = GenerateUtils.generateKey(serviceName, version);
+        String providerKey = ProviderUtils.generateKey(serviceName, version);
         String[] address = serverAddress.split(":");
         String host = address[0];
         int port = Integer.parseInt(address[1]);
         ServiceModel serviceModel = ServiceModel.builder()
                 .address(host)
                 .serviceName(serviceName)
-                .port(port)
-                .serviceVersion(version)
-                .build();
+                .servicePort(port)
+                .serviceVersion(version);
         try {
             serviceRegistry.register(serviceModel);
             log.debug("register service...", serviceModel.toString());
@@ -170,5 +144,38 @@ public class Provider implements ApplicationContextAware, InitializingBean {
             log.info("Loading service..."+ providerKey);
             handlerMap.put(providerKey, providerBean);
         }
+    }
+
+    @Override
+    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+        return bean;
+    }
+
+    @Override
+    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+        MyProvider myProvider = bean.getClass().getAnnotation(MyProvider.class);
+        if(myProvider == null){
+            return bean;
+        }
+        String serviceName = myProvider.serviceInterface().getName();
+        String version = myProvider.version();
+        String providerKey = ProviderUtils.generateKey(serviceName, version);
+        handlerMap.put(providerKey, bean);
+
+        String[] address = serverAddress.split(":");
+        String host = address[0];
+        int port = Integer.parseInt(address[1]);
+        ServiceModel serviceModel = ServiceModel.builder()
+                .address(host)
+                .serviceName(serviceName)
+                .servicePort(port)
+                .serviceVersion(version);
+        try {
+            serviceRegistry.register(serviceModel);
+            log.debug("register service...", serviceModel.toString());
+        } catch (Exception e) {
+            log.error("register fail", serviceModel.toString(), e);
+        }
+        return bean;
     }
 }

@@ -1,6 +1,6 @@
 package com.shgx.rpc.provider;
 
-import com.shgx.rpc.commons.GenerateUtils;
+import com.shgx.rpc.commons.ProviderUtils;
 import com.shgx.rpc.ptotocol.Request;
 import com.shgx.rpc.ptotocol.Response;
 import io.netty.channel.ChannelFutureListener;
@@ -43,7 +43,7 @@ public class ProviderHandler extends SimpleChannelInboundHandler<Request> {
     }
 
     private Object handle(Request request) throws Throwable {
-        String providerKey = GenerateUtils.generateKey(request.getClassName(), request.getVersion());
+        String providerKey = ProviderUtils.generateKey(request.getClassName(), request.getVersion());
         Object providerBean = handlerMap.get(providerKey);
 
         if (null == providerBean) {

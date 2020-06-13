@@ -8,6 +8,7 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -34,11 +35,11 @@ public class ConsumerPostProcessor implements BeanFactoryPostProcessor, BeanClas
     @Override
     public void setBeanClassLoader(ClassLoader classLoader) {
         this.classLoader = classLoader;
-        log.debug("classLoader:" + classLoader);
+        log.debug("classLoader:" + this.classLoader.toString());
     }
 
     @Override
-    public void postProcessBeanFactory(ConfigurableListableBeanFactory configurableListableBeanFactory) throws BeansException {
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
         this.beanFactory = beanFactory;
         for (String beanName : beanFactory.getBeanDefinitionNames()) {
             BeanDefinition definition = beanFactory.getBeanDefinition(beanName);
@@ -48,6 +49,14 @@ public class ConsumerPostProcessor implements BeanFactoryPostProcessor, BeanClas
                 ReflectionUtils.doWithFields(clazz, this::parseElement);
             }
         }
+        BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
+        this.beanDefinitionMap.forEach((beanName, beanDefinition) -> {
+            if(context.containsBean(beanName)){
+                throw new IllegalArgumentException("Spring context already has a bean named "+ beanName+ ", please change the @Consumer name.");
+            }
+            registry.registerBeanDefinition(beanName, beanDefinitionMap.get(beanName));
+            log.info("registered consumer bean {} in Spring context is ", beanName);
+        });
     }
 
     @Override

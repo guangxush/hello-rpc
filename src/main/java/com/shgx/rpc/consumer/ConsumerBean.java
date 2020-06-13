@@ -1,6 +1,6 @@
 package com.shgx.rpc.consumer;
 
-import com.shgx.rpc.commons.ServiceRegistryEnum;
+import com.shgx.rpc.commons.ServiceRegistryType;
 import com.shgx.rpc.register.ServiceRegistryFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.FactoryBean;
@@ -55,7 +55,7 @@ public class ConsumerBean implements FactoryBean {
 
     public void init() throws Exception {
         this.object = Consumer.create(interfaceClass, serviceVersion, ServiceRegistryFactory.getInstance(
-                ServiceRegistryEnum.valueOf(registryType), registryAddress
+                ServiceRegistryType.valueOf(registryType), registryAddress
         ));
         log.info("ConsumerBean {} init....", interfaceClass.getName());
     }

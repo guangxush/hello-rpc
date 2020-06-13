@@ -45,7 +45,9 @@ public class RpcInvokeHandler<T> implements InvocationHandler {
         Request request = new Request();
         request.setRequestId(UUID.randomUUID().toString());
         request.setClassName(method.getDeclaringClass().getName());
+        request.setVersion(this.serviceVersion);
         request.setMethodName(method.getName());
+        request.setParameterTypes(method.getParameterTypes());
         request.setParameters(args);
 
         log.debug(method.getDeclaringClass().getName());

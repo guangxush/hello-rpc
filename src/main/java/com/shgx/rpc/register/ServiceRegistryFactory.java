@@ -1,6 +1,6 @@
 package com.shgx.rpc.register;
 
-import com.shgx.rpc.commons.ServiceRegistryEnum;
+import com.shgx.rpc.commons.ServiceRegistryType;
 
 /**
  * @author: guangxush
@@ -9,12 +9,12 @@ import com.shgx.rpc.commons.ServiceRegistryEnum;
 public class ServiceRegistryFactory {
     private static volatile ServiceRegistry serviceRegister;
 
-    public static ServiceRegistry getInstance(ServiceRegistryEnum type, String registerAddress) throws Exception{
+    public static ServiceRegistry getInstance(ServiceRegistryType type, String registerAddress) throws Exception{
         if(null == serviceRegister){
             synchronized (ServiceRegistryFactory.class){
                 if(null == serviceRegister){
-                    serviceRegister = type == ServiceRegistryEnum.zookeeper ? new ZookeeperServiceRegistry(registerAddress) :
-                            type == ServiceRegistryEnum.zookeeper ? new EurekaServiceRegistry() : null;
+                    serviceRegister = type == ServiceRegistryType.zookeeper ? new ZookeeperServiceRegistry(registerAddress) :
+                            type == ServiceRegistryType.eureka ? new EurekaServiceRegistry() : null;
                 }
             }
         }
