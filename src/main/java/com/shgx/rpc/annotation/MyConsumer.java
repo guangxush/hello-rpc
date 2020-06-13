@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * @create: 2020/06/10
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
+@Target({ElementType.FIELD})
 @Component
 public @interface MyConsumer {
     String version() default "0.0.1";

@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -36,7 +35,7 @@ import java.util.concurrent.TimeUnit;
  * @create: 2020/06/11
  */
 @Slf4j
-public class Provider implements BeanPostProcessor, InitializingBean {
+public class Provider implements ApplicationContextAware, InitializingBean {
 
     private String serverAddress;
 
@@ -87,12 +86,34 @@ public class Provider implements BeanPostProcessor, InitializingBean {
         ).start();
     }
 
+    @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        Map<String, Object> providerMap = applicationContext.getBeansWithAnnotation(MyProvider.class);
+        if (MapUtils.isNotEmpty(providerMap)) {
+            for (Object providerBean : providerMap.values()) {
+                MyProvider myProvider = providerBean.getClass().getAnnotation(MyProvider.class);
+                String serviceName = myProvider.serviceInterface().getName();
+                String version = myProvider.version();
+                String providerKey = ProviderUtils.generateKey(serviceName, version);
+                handlerMap.put(providerKey, providerBean);
 
+                String[] address = serverAddress.split(":");
+                String host = address[0];
+                int port = Integer.parseInt(address[1]);
+                ServiceModel serviceModel = ServiceModel.builder()
+                        .address(host)
+                        .serviceName(serviceName)
+                        .servicePort(port)
+                        .serviceVersion(version);
+                try {
+                    serviceRegistry.register(serviceModel);
+                    log.debug("register service...", serviceModel.toString());
+                } catch (Exception e) {
+                    log.error("register fail", serviceModel.toString(), e);
+                }
+            }
+        }
     }
-
-
-
 
     public void start() throws InterruptedException {
         if (baseGroup == null || workerGroup == null) {
@@ -146,36 +167,37 @@ public class Provider implements BeanPostProcessor, InitializingBean {
         }
     }
 
-    @Override
-    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-        return bean;
-    }
-
-    @Override
-    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        MyProvider myProvider = bean.getClass().getAnnotation(MyProvider.class);
-        if(myProvider == null){
-            return bean;
-        }
-        String serviceName = myProvider.serviceInterface().getName();
-        String version = myProvider.version();
-        String providerKey = ProviderUtils.generateKey(serviceName, version);
-        handlerMap.put(providerKey, bean);
-
-        String[] address = serverAddress.split(":");
-        String host = address[0];
-        int port = Integer.parseInt(address[1]);
-        ServiceModel serviceModel = ServiceModel.builder()
-                .address(host)
-                .serviceName(serviceName)
-                .servicePort(port)
-                .serviceVersion(version);
-        try {
-            serviceRegistry.register(serviceModel);
-            log.debug("register service...", serviceModel.toString());
-        } catch (Exception e) {
-            log.error("register fail", serviceModel.toString(), e);
-        }
-        return bean;
-    }
+//    BeanPostProcessor
+//    @Override
+//    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+//        return bean;
+//    }
+//
+//    @Override
+//    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+//        MyProvider myProvider = bean.getClass().getAnnotation(MyProvider.class);
+//        if(myProvider == null){
+//            return bean;
+//        }
+//        String serviceName = myProvider.serviceInterface().getName();
+//        String version = myProvider.version();
+//        String providerKey = ProviderUtils.generateKey(serviceName, version);
+//        handlerMap.put(providerKey, bean);
+//
+//        String[] address = serverAddress.split(":");
+//        String host = address[0];
+//        int port = Integer.parseInt(address[1]);
+//        ServiceModel serviceModel = ServiceModel.builder()
+//                .address(host)
+//                .serviceName(serviceName)
+//                .servicePort(port)
+//                .serviceVersion(version);
+//        try {
+//            serviceRegistry.register(serviceModel);
+//            log.debug("register service...", serviceModel.toString());
+//        } catch (Exception e) {
+//            log.error("register fail", serviceModel.toString(), e);
+//        }
+//        return bean;
+//    }
 }
