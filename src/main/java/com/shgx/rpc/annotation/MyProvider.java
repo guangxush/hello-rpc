@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * @create: 2020/06/10
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD})
+@Target({ElementType.TYPE})
 @Component
 public @interface MyProvider {
     Class<?> serviceInterface() default Object.class;
