@@ -52,3 +52,7 @@ public class HelloController {
     }
 }
 ```
+
+### 参考文档
+
+[一个轻量级RPC框架](https://www.cnblogs.com/luxiaoxun/p/5272384.html)
