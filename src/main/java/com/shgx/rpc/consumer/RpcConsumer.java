@@ -45,7 +45,6 @@ public class RpcConsumer extends SimpleChannelInboundHandler<RpcResponse> {
             Bootstrap bootstrap = new Bootstrap();
             bootstrap.group(eventLoopGroup).channel(NioSocketChannel.class)
                     .handler(new ChannelInitializer() {
-
                         @Override
                         protected void initChannel(Channel channel) throws Exception {
                             log.debug("init the consumer request...");
@@ -97,6 +96,9 @@ public class RpcConsumer extends SimpleChannelInboundHandler<RpcResponse> {
         }
     }
 
+    /**
+     * 关闭客户端
+     */
     private void close(){
         // 关闭套接字
         if(this.channel!=null){

@@ -145,8 +145,8 @@ public class RpcProvider implements InitializingBean, BeanPostProcessor {
 
     /**
      * 手动注册服务，便于测试
-     * @param providerBean
-     * @param serverAddress
+     * @param providerBean 服务提供方的bean
+     * @param serverAddress 服务提供方地址
      */
     public void addService(Object providerBean, String serverAddress){
         MyProvider myProvider = providerBean.getClass().getAnnotation(MyProvider.class);
@@ -192,6 +192,7 @@ public class RpcProvider implements InitializingBean, BeanPostProcessor {
         //缓存provider bean到本地缓存中
         handlerMap.put(providerKey, bean);
 
+        // 服务注册到注册中心
         String[] address = serverAddress.split(":");
         String host = address[0];
         int port = Integer.parseInt(address[1]);
