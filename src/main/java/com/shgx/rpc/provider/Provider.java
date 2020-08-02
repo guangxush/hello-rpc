@@ -19,8 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.util.HashMap;
@@ -30,12 +30,15 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import static com.shgx.rpc.constants.Constants.PROVIDER_THREAD_POOL_NUM;
+import static com.shgx.rpc.constants.Constants.PROVIDER_THREAD_POOL_QUEUE_LEN;
+
 /**
  * @author: guangxush
  * @create: 2020/06/11
  */
 @Slf4j
-public class Provider implements ApplicationContextAware, InitializingBean {
+public class Provider implements InitializingBean, BeanPostProcessor {
 
     private String serverAddress;
 
@@ -46,7 +49,7 @@ public class Provider implements ApplicationContextAware, InitializingBean {
     private ServiceRegistry serviceRegistry;
 
     private Map<String, Object> handlerMap = new HashMap<>(256);
-    private EventLoopGroup baseGroup = null;
+    private EventLoopGroup bossGroup = null;
     private EventLoopGroup workerGroup = null;
 
     public Provider(String serverAddress) {
@@ -62,11 +65,11 @@ public class Provider implements ApplicationContextAware, InitializingBean {
         if (threadPoolexecutor == null) {
             synchronized (Provider.class) {
                 if (threadPoolexecutor == null) {
-                    threadPoolexecutor = new ThreadPoolExecutor(256,
-                            256,
+                    threadPoolexecutor = new ThreadPoolExecutor(PROVIDER_THREAD_POOL_NUM,
+                            PROVIDER_THREAD_POOL_NUM,
                             600L,
                             TimeUnit.SECONDS,
-                            new ArrayBlockingQueue<>(1024),
+                            new ArrayBlockingQueue<>(PROVIDER_THREAD_POOL_QUEUE_LEN),
                             threadFactory);
                 }
             }
@@ -85,42 +88,47 @@ public class Provider implements ApplicationContextAware, InitializingBean {
         }
         ).start();
     }
+//
+//    @Override
+//    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+//        Map<String, Object> providerMap = applicationContext.getBeansWithAnnotation(MyProvider.class);
+//        if (MapUtils.isNotEmpty(providerMap)) {
+//            for (Object providerBean : providerMap.values()) {
+//                MyProvider myProvider = providerBean.getClass().getAnnotation(MyProvider.class);
+//                String serviceName = myProvider.serviceInterface().getName();
+//                String version = myProvider.version();
+//                String providerKey = ProviderUtils.generateKey(serviceName, version);
+//                handlerMap.put(providerKey, providerBean);
+//
+//                String[] address = serverAddress.split(":");
+//                String host = address[0];
+//                int port = Integer.parseInt(address[1]);
+//                ServiceModel serviceModel = ServiceModel.builder()
+//                        .address(host)
+//                        .serviceName(serviceName)
+//                        .servicePort(port)
+//                        .serviceVersion(version);
+//                try {
+//                    serviceRegistry.register(serviceModel);
+//                    log.debug("register service...", serviceModel.toString());
+//                } catch (Exception e) {
+//                    log.error("register fail", serviceModel.toString(), e);
+//                }
+//            }
+//        }
+//    }
 
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        Map<String, Object> providerMap = applicationContext.getBeansWithAnnotation(MyProvider.class);
-        if (MapUtils.isNotEmpty(providerMap)) {
-            for (Object providerBean : providerMap.values()) {
-                MyProvider myProvider = providerBean.getClass().getAnnotation(MyProvider.class);
-                String serviceName = myProvider.serviceInterface().getName();
-                String version = myProvider.version();
-                String providerKey = ProviderUtils.generateKey(serviceName, version);
-                handlerMap.put(providerKey, providerBean);
-
-                String[] address = serverAddress.split(":");
-                String host = address[0];
-                int port = Integer.parseInt(address[1]);
-                ServiceModel serviceModel = ServiceModel.builder()
-                        .address(host)
-                        .serviceName(serviceName)
-                        .servicePort(port)
-                        .serviceVersion(version);
-                try {
-                    serviceRegistry.register(serviceModel);
-                    log.debug("register service...", serviceModel.toString());
-                } catch (Exception e) {
-                    log.error("register fail", serviceModel.toString(), e);
-                }
-            }
-        }
-    }
-
+    /**
+     *
+     * @throws InterruptedException
+     */
     public void start() throws InterruptedException {
-        if (baseGroup == null || workerGroup == null) {
-            baseGroup = new NioEventLoopGroup();
+        if (bossGroup == null || workerGroup == null) {
+            bossGroup = new NioEventLoopGroup();
             workerGroup = new NioEventLoopGroup();
             ServerBootstrap bootstrap = new ServerBootstrap();
-            bootstrap.group(baseGroup, workerGroup).channel(NioServerSocketChannel.class).childHandler(new ChannelInitializer<SocketChannel>() {
+            //通用平台使用NioServerSocketChannel；Linux使用EpollServerSocketChannel
+            bootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).childHandler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 protected void initChannel(SocketChannel socketChannel) throws Exception {
                     socketChannel.pipeline()
@@ -136,11 +144,16 @@ public class Provider implements ApplicationContextAware, InitializingBean {
             int port = Integer.parseInt(address[1]);
 
             ChannelFuture future = bootstrap.bind(host, port).sync();
-            log.info("Server started on port{}", port);
+            log.info("Server started on port {}", port);
             future.channel().closeFuture().sync();
         }
     }
 
+    /**
+     * 手动注册服务，便于测试
+     * @param providerBean
+     * @param serverAddress
+     */
     public void addService(Object providerBean, String serverAddress){
         MyProvider myProvider = providerBean.getClass().getAnnotation(MyProvider.class);
         String serviceName = myProvider.serviceInterface().getName();
@@ -167,37 +180,38 @@ public class Provider implements ApplicationContextAware, InitializingBean {
         }
     }
 
-//    BeanPostProcessor
-//    @Override
-//    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-//        return bean;
-//    }
-//
-//    @Override
-//    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-//        MyProvider myProvider = bean.getClass().getAnnotation(MyProvider.class);
-//        if(myProvider == null){
-//            return bean;
-//        }
-//        String serviceName = myProvider.serviceInterface().getName();
-//        String version = myProvider.version();
-//        String providerKey = ProviderUtils.generateKey(serviceName, version);
-//        handlerMap.put(providerKey, bean);
-//
-//        String[] address = serverAddress.split(":");
-//        String host = address[0];
-//        int port = Integer.parseInt(address[1]);
-//        ServiceModel serviceModel = ServiceModel.builder()
-//                .address(host)
-//                .serviceName(serviceName)
-//                .servicePort(port)
-//                .serviceVersion(version);
-//        try {
-//            serviceRegistry.register(serviceModel);
-//            log.debug("register service...", serviceModel.toString());
-//        } catch (Exception e) {
-//            log.error("register fail", serviceModel.toString(), e);
-//        }
-//        return bean;
-//    }
+    //BeanPostProcessor
+    @Override
+    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+        return bean;
+    }
+
+    @Override
+    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+        MyProvider myProvider = bean.getClass().getAnnotation(MyProvider.class);
+        if(myProvider == null){
+            return bean;
+        }
+        String serviceName = myProvider.serviceInterface().getName();
+        String version = myProvider.version();
+        String providerKey = ProviderUtils.generateKey(serviceName, version);
+        //缓存provider bean到本地缓存中
+        handlerMap.put(providerKey, bean);
+
+        String[] address = serverAddress.split(":");
+        String host = address[0];
+        int port = Integer.parseInt(address[1]);
+        ServiceModel serviceModel = ServiceModel.builder()
+                .address(host)
+                .serviceName(serviceName)
+                .servicePort(port)
+                .serviceVersion(version);
+        try {
+            serviceRegistry.register(serviceModel);
+            log.debug("register service...", serviceModel.toString());
+        } catch (Exception e) {
+            log.error("register fail", serviceModel.toString(), e);
+        }
+        return bean;
+    }
 }

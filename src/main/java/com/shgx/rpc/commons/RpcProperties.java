@@ -11,6 +11,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "rpc")
 public class RpcProperties {
     private String serviceAddress;
-    private String serviceRegisterAddress;
-    private String serviceRegisterType;
+    private String serviceRegistryAddress;
+    private String serviceRegistryType;
 }

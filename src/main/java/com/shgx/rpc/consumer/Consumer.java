@@ -23,13 +23,13 @@ import java.lang.reflect.Proxy;
 public class Consumer extends SimpleChannelInboundHandler<Response> {
 
     private final Object obj = new Object();
-    private ServiceRegistry serviceRegister;
-    private EventLoopGroup eventLoopGroup = new NioEventLoopGroup(0);
+    private ServiceRegistry serviceRegistry;
+    private EventLoopGroup eventLoopGroup = new NioEventLoopGroup(4);
     private Channel channel;
     private Response response;
 
-    public Consumer(ServiceRegistry serviceRegister) {
-        this.serviceRegister = serviceRegister;
+    public Consumer(ServiceRegistry serviceRegistry) {
+        this.serviceRegistry = serviceRegistry;
     }
 
     @SuppressWarnings("unchecked")
@@ -47,7 +47,7 @@ public class Consumer extends SimpleChannelInboundHandler<Response> {
 
                         @Override
                         protected void initChannel(Channel channel) throws Exception {
-                            log.debug("init the request:");
+                            log.debug("init the consumer request:");
                             channel.pipeline()
                                     .addLast(new RpcEncoder())
                                     .addLast(new RpcDecoder())
@@ -55,11 +55,12 @@ public class Consumer extends SimpleChannelInboundHandler<Response> {
                         }
                     });
             String targetService = ProviderUtils.generateKey(request.getClassName(), request.getVersion());
-            ServiceModel serviceModel = serviceRegister.discovery(targetService);
+            ServiceModel serviceModel = serviceRegistry.discovery(targetService);
             if(serviceModel == null){
+                // 没有服务的提供方
                 throw new RuntimeException("no service for"+ targetService);
             }
-            log.debug("discovery for {}-{}", targetService, serviceModel.getServiceName());
+            log.debug("discovery for {}-{}", targetService, serviceModel.toString());
             final ChannelFuture future = bootstrap.connect(serviceModel.getAddress(), serviceModel.getServicePort()).sync();
 
             future.addListener((ChannelFutureListener) arg0 -> {
@@ -89,6 +90,7 @@ public class Consumer extends SimpleChannelInboundHandler<Response> {
         this.response = response;
 
         synchronized (obj){
+            // 收到响应， 唤醒线程
             obj.notifyAll();
         }
     }

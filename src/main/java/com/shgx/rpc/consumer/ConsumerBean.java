@@ -13,7 +13,7 @@ import org.springframework.beans.factory.FactoryBean;
 public class ConsumerBean implements FactoryBean {
 
     private Class<?> interfaceClass;
-    private String serviceVersion;
+    private String version;
     private String registryType;
     private String registryAddress;
     private Object object;
@@ -22,8 +22,8 @@ public class ConsumerBean implements FactoryBean {
         this.interfaceClass = interfaceClass;
     }
 
-    public void setServiceVersion(String serviceVersion) {
-        this.serviceVersion = serviceVersion;
+    public void setVersion(String version) {
+        this.version = version;
     }
 
     public void setRegistryType(String registryType) {
@@ -54,7 +54,7 @@ public class ConsumerBean implements FactoryBean {
     }
 
     public void init() throws Exception {
-        this.object = Consumer.create(interfaceClass, serviceVersion, ServiceRegistryFactory.getInstance(
+        this.object = Consumer.create(interfaceClass, version, ServiceRegistryFactory.getInstance(
                 ServiceRegistryType.valueOf(registryType), registryAddress
         ));
         log.info("ConsumerBean {} init....", interfaceClass.getName());

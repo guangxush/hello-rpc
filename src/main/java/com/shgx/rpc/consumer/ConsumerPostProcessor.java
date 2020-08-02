@@ -67,15 +67,15 @@ public class ConsumerPostProcessor implements BeanFactoryPostProcessor, BeanClas
 
     private void parseElement(Field field) {
         MyConsumer annotation = AnnotationUtils.getAnnotation(field, MyConsumer.class);
-        if (annotation != null) {
+        if (annotation == null) {
             return;
         }
-        BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(MyConsumer.class);
+        BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(ConsumerBean.class);
         builder.setInitMethodName("init");
         builder.addPropertyValue("version", annotation.version());
         builder.addPropertyValue("interfaceClass", field.getType());
-        builder.addPropertyValue("registerType", annotation.registerType());
-        builder.addPropertyValue("registerAddress", annotation.registerAddress());
+        builder.addPropertyValue("registryType", annotation.registryType());
+        builder.addPropertyValue("registryAddress", annotation.registryAddress());
 
         BeanDefinition beanDefinition = builder.getBeanDefinition();
         beanDefinitionMap.put(field.getName(), beanDefinition);

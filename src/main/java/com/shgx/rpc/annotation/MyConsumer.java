@@ -1,5 +1,6 @@
 package com.shgx.rpc.annotation;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.lang.annotation.ElementType;
@@ -13,11 +14,23 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD})
-@Component
+@Autowired
 public @interface MyConsumer {
+    /**
+     * com.shgx.rpc.consumer.ConsumerBean#setVersion(java.lang.String)
+     * @return
+     */
     String version() default "0.0.1";
 
-    String registerAddress() default "127.0.0.1:2181";
+    /**
+     * com.shgx.rpc.consumer.ConsumerBean#setRegistryAddress(java.lang.String)
+     * @return
+     */
+    String registryAddress() default "127.0.0.1:2181";
 
-    String registerType() default "zookeeper";
+    /**
+     * com.shgx.rpc.consumer.ConsumerBean#setRegistryType(java.lang.String)
+     * @return
+     */
+    String registryType() default "zookeeper";
 }

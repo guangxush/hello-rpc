@@ -5,8 +5,12 @@ package com.shgx.rpc.commons;
  * @create: 2020/06/10
  */
 public class RPCException extends RuntimeException {
-    public RPCException(String message, String s) {
+    private String exceptionCode;
+    private String exceptionMessage;
 
+    public RPCException(String exceptionCode, String exceptionMessage) {
+        this.exceptionCode = exceptionCode;
+        this.exceptionMessage = exceptionMessage;
     }
 
     public RPCException(String message) {

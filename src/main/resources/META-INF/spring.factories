@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.shgx.rpc.provider.ProviderAutoConfiguration,\
+com.shgx.rpc.consumer.ConsumerAutoConfiguration
