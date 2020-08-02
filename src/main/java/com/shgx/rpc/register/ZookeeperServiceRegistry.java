@@ -26,6 +26,9 @@ public class ZookeeperServiceRegistry implements ServiceRegistry {
     private final Object lock = new Object();
     private ServiceDiscovery<ServiceModel> serviceDiscovery;
 
+    /**
+     * 本地缓存服务，避免过多创建请求
+     */
     private Map<String, ServiceProvider<ServiceModel>> serviceProviderCache;
     private List<Closeable> closeableProvider = Lists.newArrayList();
 
@@ -61,8 +64,7 @@ public class ZookeeperServiceRegistry implements ServiceRegistry {
     public void unRegister(ServiceModel serviceModel) throws Exception {
         ServiceInstance<ServiceModel> serviceInstance =
                 ServiceInstance.<ServiceModel>builder()
-                // todo
-                .name(serviceModel.getServiceName())
+                .name(ProviderUtils.generateKey(serviceModel.getServiceName(), serviceModel.getServiceVersion()))
                 .address(serviceModel.getAddress())
                 .port(serviceModel.getPort())
                 .payload(serviceModel)
@@ -94,8 +96,7 @@ public class ZookeeperServiceRegistry implements ServiceRegistry {
 
     @Override
     public void close() throws Exception{
-        for(Closeable closeable: closeableProvider)
-        {
+        for(Closeable closeable: closeableProvider) {
             CloseableUtils.closeQuietly(closeable);
         }
         serviceDiscovery.close();

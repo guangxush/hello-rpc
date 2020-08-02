@@ -5,8 +5,12 @@ package com.shgx.rpc.register;
  * @create: 2020/06/11
  */
 public class EurekaServiceRegistry implements ServiceRegistry {
+
+    public EurekaServiceRegistry(String address) {
+    }
+
     @Override
-    public void register(ServiceModel serviceModel) throws Exception {
+    public void register(ServiceModel  serviceModel) throws Exception {
 
     }
 

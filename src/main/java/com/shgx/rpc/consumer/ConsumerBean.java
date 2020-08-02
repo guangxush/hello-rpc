@@ -57,7 +57,7 @@ public class ConsumerBean implements FactoryBean {
         this.object = RpcConsumer.create(interfaceClass, serviceVersion, ServiceRegistryFactory.getInstance(
                 ServiceRegistryType.valueOf(registryType), registryAddress
         ));
-        log.info("RpcConsumerBean {} init ...", interfaceClass.getName());
+        log.info("ConsumerBean {} init ...", interfaceClass.getName());
     }
 
 }

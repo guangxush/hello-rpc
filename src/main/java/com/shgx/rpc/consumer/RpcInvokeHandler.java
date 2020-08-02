@@ -36,7 +36,7 @@ public class RpcInvokeHandler<T> implements InvocationHandler {
         if (Object.class == method.getDeclaringClass()) {
             String name = method.getName();
             if (EQUALS.equals(name)) {
-                return proxy = args[0];
+                return proxy == args[0];
             } else if (HASH_CODE.equals(name)) {
                 System.identityHashCode(proxy);
             } else if (TO_STRING.equals(name)) {
