@@ -1,10 +1,14 @@
 ## 自定义实现RPC
 
+### RPC主要框架
+
+
+
 
 ### RPC使用方式
 0. 打开zookeeper
 ```text
-
+zkServer start
 ```
 
 1. 打包```mvn clean install -Dmaven.test.skip=true```
@@ -34,6 +38,7 @@ rpc.service-registry-address=127.0.0.1:2181
 public class HelloServiceImpl implements HelloService {
     @Override
     public String hello(String param) {
+        System.out.println("hello");
         return "hello, " + param;
     }
 }
@@ -42,7 +47,7 @@ public class HelloServiceImpl implements HelloService {
 5. 服务调用
 
 ```java
-@RestController
+@Controller
 public class HelloController {
 
     @MyConsumer(version = "0.0.1")
@@ -54,10 +59,6 @@ public class HelloController {
     }
 }
 ```
-
-6. 参考demo
-
-[测试demo](./test-rpc)
 
 ### 参考文档
 
