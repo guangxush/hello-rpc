@@ -23,6 +23,9 @@ public class RpcInvokeHandler<T> implements InvocationHandler {
     private String serviceVersion;
     private ServiceRegistry serviceRegistry;
 
+    public RpcInvokeHandler() {
+    }
+
     public RpcInvokeHandler(String serviceVersion, ServiceRegistry serviceRegistry) {
         this.serviceVersion = serviceVersion;
         this.serviceRegistry = serviceRegistry;
@@ -37,7 +40,7 @@ public class RpcInvokeHandler<T> implements InvocationHandler {
             } else if (HASH_CODE.equals(name)) {
                 System.identityHashCode(proxy);
             } else if (TO_STRING.equals(name)) {
-                return proxy.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(proxy)) + ", Handler" + this;
+                return proxy.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(proxy)) + ", with InvocationHandler" + this;
             }else{
                 throw new IllegalStateException(String.valueOf(method));
             }
@@ -45,7 +48,7 @@ public class RpcInvokeHandler<T> implements InvocationHandler {
         Request request = new Request();
         request.setRequestId(UUID.randomUUID().toString());
         request.setClassName(method.getDeclaringClass().getName());
-        request.setVersion(this.serviceVersion);
+        request.setServiceVersion(this.serviceVersion);
         request.setMethodName(method.getName());
         request.setParameterTypes(method.getParameterTypes());
         request.setParameters(args);
@@ -62,10 +65,10 @@ public class RpcInvokeHandler<T> implements InvocationHandler {
         Consumer consumer = new Consumer(this.serviceRegistry);
         Response response = consumer.sendRequest(request);
         if(null != response){
-            log.debug("response:" + response.toString());
+            log.debug("consumer receive provider rpc response:" + response.toString());
             return response.getResult();
         }else{
-            throw new RuntimeException("request fail!");
+            throw new RuntimeException("consumer rpc fail, response is null!");
         }
     }
 }

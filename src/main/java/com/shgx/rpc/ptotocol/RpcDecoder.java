@@ -16,20 +16,20 @@ public class RpcDecoder extends ByteToMessageDecoder{
     }
 
     @Override
-    protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf, List<Object> list) throws Exception {
-        if (byteBuf.readableBytes() < 4) {
+    protected final void decode(ChannelHandlerContext channelHandlerContext, ByteBuf in, List<Object> out)throws Exception{
+        if (in.readableBytes() < 4) {
             return;
         }
-        byteBuf.markReaderIndex();
-        int dataLength = byteBuf.readInt();
-        if (byteBuf.readableBytes() < dataLength) {
-            byteBuf.resetReaderIndex();
+        in.markReaderIndex();
+        int dataLength = in.readInt();
+        if (in.readableBytes() < dataLength) {
+            in.resetReaderIndex();
             return;
         }
         byte[] data = new byte[dataLength];
-        byteBuf.readBytes(data);
+        in.readBytes(data);
         Object object = HessianSDK.deserialize(data);
         assert object != null;
-        list.add(object);
+        out.add(object);
     }
 }

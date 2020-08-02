@@ -7,7 +7,7 @@ import com.shgx.rpc.ptotocol.RpcDecoder;
 import com.shgx.rpc.ptotocol.RpcEncoder;
 import com.shgx.rpc.register.ServiceModel;
 import com.shgx.rpc.register.ServiceRegistry;
-import io.netty.bootstrap.*;
+import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -34,7 +34,8 @@ public class Consumer extends SimpleChannelInboundHandler<Response> {
 
     @SuppressWarnings("unchecked")
     public static <T> T create(Class<T> interfaceClass, String serviceVersion, ServiceRegistry serviceRegistry) {
-        return (T)Proxy.newProxyInstance(interfaceClass.getClassLoader(),
+        return (T) Proxy.newProxyInstance(
+                interfaceClass.getClassLoader(),
                 new Class<?>[]{interfaceClass},
                 new RpcInvokeHandler<>(serviceVersion, serviceRegistry));
     }
@@ -47,28 +48,29 @@ public class Consumer extends SimpleChannelInboundHandler<Response> {
 
                         @Override
                         protected void initChannel(Channel channel) throws Exception {
-                            log.debug("init the consumer request:");
+                            log.debug("init the consumer request...");
                             channel.pipeline()
                                     .addLast(new RpcEncoder())
                                     .addLast(new RpcDecoder())
                                     .addLast(Consumer.this);
                         }
                     });
-            String targetService = ProviderUtils.generateKey(request.getClassName(), request.getVersion());
+            String targetService = ProviderUtils.generateKey(request.getClassName(), request.getServiceVersion());
             ServiceModel serviceModel = serviceRegistry.discovery(targetService);
             if(serviceModel == null){
                 // 没有服务的提供方
-                throw new RuntimeException("no service for"+ targetService);
+                throw new RuntimeException("no available service provider for" + targetService);
             }
-            log.debug("discovery for {}-{}", targetService, serviceModel.toString());
-            final ChannelFuture future = bootstrap.connect(serviceModel.getAddress(), serviceModel.getServicePort()).sync();
+            log.debug("discovery provider for {}-{}", targetService, serviceModel.toString());
+            final ChannelFuture future = bootstrap.connect(serviceModel.getAddress(), serviceModel.getPort()).sync();
 
             future.addListener((ChannelFutureListener) arg0 -> {
                 if(future.isSuccess()){
-                    log.debug("connect rpc success");
+                    log.debug("connect rpc provider success");
                 }else{
-                    log.error("connect rpc failed");
+                    log.error("connect rpc provider failed");
                     future.cause().printStackTrace();
+                    // 关闭线程组
                     eventLoopGroup.shutdownGracefully();
                 }
             });
@@ -96,9 +98,11 @@ public class Consumer extends SimpleChannelInboundHandler<Response> {
     }
 
     private void close(){
+        // 关闭套接字
         if(this.channel!=null){
             this.channel.close();
         }
+        // 关闭线程组
         if(this.eventLoopGroup!=null){
             this.eventLoopGroup.shutdownGracefully();
         }

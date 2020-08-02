@@ -12,15 +12,15 @@ import java.lang.annotation.Target;
  * @author: guangxush
  * @create: 2020/06/10
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD})
-@Autowired
+@Retention(RetentionPolicy.RUNTIME) //运行时解析
+@Target({ElementType.FIELD}) //注解目标为属性
+@Autowired //被Spring加载
 public @interface MyConsumer {
     /**
      * com.shgx.rpc.consumer.ConsumerBean#setVersion(java.lang.String)
      * @return
      */
-    String version() default "0.0.1";
+    String serviceVersion() default "0.0.1";
 
     /**
      * com.shgx.rpc.consumer.ConsumerBean#setRegistryAddress(java.lang.String)

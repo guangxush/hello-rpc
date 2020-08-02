@@ -11,11 +11,11 @@ import java.lang.annotation.Target;
  * @author: guangxush
  * @create: 2020/06/10
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
-@Component
+@Retention(RetentionPolicy.RUNTIME) //运行时解析
+@Target({ElementType.TYPE}) //class注解
+@Component //被Spring加载
 public @interface MyProvider {
-    Class<?> serviceInterface() default Object.class;
+    Class<?> serviceInterface() default Object.class; // 接口
 
-    String version() default "0.0.1";
+    String serviceVersion() default "0.0.1"; // 版本号
 }

@@ -16,11 +16,9 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.MapUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.context.ApplicationContext;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.util.HashMap;
@@ -40,14 +38,10 @@ import static com.shgx.rpc.constants.Constants.PROVIDER_THREAD_POOL_QUEUE_LEN;
 @Slf4j
 public class Provider implements InitializingBean, BeanPostProcessor {
 
-    private String serverAddress;
-
     private static ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("rpc-pool-%d").build();
-
     private static ThreadPoolExecutor threadPoolexecutor;
-
+    private String serverAddress;
     private ServiceRegistry serviceRegistry;
-
     private Map<String, Object> handlerMap = new HashMap<>(256);
     private EventLoopGroup bossGroup = null;
     private EventLoopGroup workerGroup = null;
@@ -119,7 +113,7 @@ public class Provider implements InitializingBean, BeanPostProcessor {
 //    }
 
     /**
-     *
+     * netty监听服务, 进行服务注册
      * @throws InterruptedException
      */
     public void start() throws InterruptedException {
@@ -157,7 +151,7 @@ public class Provider implements InitializingBean, BeanPostProcessor {
     public void addService(Object providerBean, String serverAddress){
         MyProvider myProvider = providerBean.getClass().getAnnotation(MyProvider.class);
         String serviceName = myProvider.serviceInterface().getName();
-        String version = myProvider.version();
+        String version = myProvider.serviceVersion();
         String providerKey = ProviderUtils.generateKey(serviceName, version);
         String[] address = serverAddress.split(":");
         String host = address[0];
@@ -193,7 +187,7 @@ public class Provider implements InitializingBean, BeanPostProcessor {
             return bean;
         }
         String serviceName = myProvider.serviceInterface().getName();
-        String version = myProvider.version();
+        String version = myProvider.serviceVersion();
         String providerKey = ProviderUtils.generateKey(serviceName, version);
         //缓存provider bean到本地缓存中
         handlerMap.put(providerKey, bean);
@@ -208,9 +202,9 @@ public class Provider implements InitializingBean, BeanPostProcessor {
                 .serviceVersion(version);
         try {
             serviceRegistry.register(serviceModel);
-            log.debug("register service...", serviceModel.toString());
+            log.debug("register service... {}", serviceModel.toString());
         } catch (Exception e) {
-            log.error("register fail", serviceModel.toString(), e);
+            log.error("register fail {}", serviceModel.toString(), e);
         }
         return bean;
     }

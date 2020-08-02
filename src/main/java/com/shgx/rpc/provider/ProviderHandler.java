@@ -24,10 +24,16 @@ public class ProviderHandler extends SimpleChannelInboundHandler<Request> {
         this.handlerMap = handlerMap;
     }
 
+    /**
+     * rpc请求处理器
+     * @param channelHandlerContext
+     * @param request
+     * @throws Exception
+     */
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, Request request) throws Exception {
         Provider.submit(() -> {
-            log.debug("Receive request:", request.getRequestId());
+            log.debug("Receive request {}", request.getRequestId());
             Response response = new Response();
             response.setRequestId(request.getRequestId());
             try {
@@ -43,7 +49,7 @@ public class ProviderHandler extends SimpleChannelInboundHandler<Request> {
     }
 
     private Object handle(Request request) throws Throwable {
-        String providerKey = ProviderUtils.generateKey(request.getClassName(), request.getVersion());
+        String providerKey = ProviderUtils.generateKey(request.getClassName(), request.getServiceVersion());
         Object providerBean = handlerMap.get(providerKey);
 
         if (null == providerBean) {

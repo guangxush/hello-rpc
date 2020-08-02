@@ -13,30 +13,10 @@ import org.springframework.beans.factory.FactoryBean;
 public class ConsumerBean implements FactoryBean {
 
     private Class<?> interfaceClass;
-    private String version;
+    private String serviceVersion;
     private String registryType;
     private String registryAddress;
     private Object object;
-
-    public void setInterfaceClass(Class<?> interfaceClass) {
-        this.interfaceClass = interfaceClass;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public void setRegistryType(String registryType) {
-        this.registryType = registryType;
-    }
-
-    public void setRegistryAddress(String registryAddress) {
-        this.registryAddress = registryAddress;
-    }
-
-    public void setObject(Object object) {
-        this.object = object;
-    }
 
     @Override
     public Object getObject() throws Exception {
@@ -53,10 +33,31 @@ public class ConsumerBean implements FactoryBean {
         return true;
     }
 
+    /**
+     * setter注入
+     * @param interfaceClass
+     */
+    public void setInterfaceClass(Class<?> interfaceClass) {
+        this.interfaceClass = interfaceClass;
+    }
+
+    public void setServiceVersion(String serviceVersion) {
+        this.serviceVersion = serviceVersion;
+    }
+
+    public void setRegistryType(String registryType) {
+        this.registryType = registryType;
+    }
+
+    public void setRegistryAddress(String registryAddress) {
+        this.registryAddress = registryAddress;
+    }
+
     public void init() throws Exception {
-        this.object = Consumer.create(interfaceClass, version, ServiceRegistryFactory.getInstance(
+        this.object = Consumer.create(interfaceClass, serviceVersion, ServiceRegistryFactory.getInstance(
                 ServiceRegistryType.valueOf(registryType), registryAddress
         ));
-        log.info("ConsumerBean {} init....", interfaceClass.getName());
+        log.info("RpcConsumerBean {} init ...", interfaceClass.getName());
     }
+
 }

@@ -38,16 +38,19 @@ public class ZookeeperServiceRegistry implements ServiceRegistry {
                 builder(ServiceModel.class)
                 .client(this.client)
                 .serializer(serializer)
-                .basePath(BASE_URL).build();
+                .basePath(BASE_URL)
+                .build();
         serviceDiscovery.start();
     }
 
     @Override
     public void register(ServiceModel serviceModel) throws Exception {
-        ServiceInstance<ServiceModel> serviceInstance = ServiceInstance.<ServiceModel>builder().
-                name(ProviderUtils.generateKey(serviceModel.getServiceName(), serviceModel.getServiceVersion()))
+        ServiceInstance<ServiceModel> serviceInstance = ServiceInstance
+                .<ServiceModel>builder()
+                //使用{服务名}:{服务版本}唯一标识一个服务
+                .name(ProviderUtils.generateKey(serviceModel.getServiceName(), serviceModel.getServiceVersion()))
                 .address(serviceModel.getAddress())
-                .port(serviceModel.getServicePort())
+                .port(serviceModel.getPort())
                 .payload(serviceModel)
                 .uriSpec(new UriSpec("{scheme}://{address}:{port}"))
                 .build();
@@ -56,10 +59,12 @@ public class ZookeeperServiceRegistry implements ServiceRegistry {
 
     @Override
     public void unRegister(ServiceModel serviceModel) throws Exception {
-        ServiceInstance<ServiceModel> serviceInstance = ServiceInstance.<ServiceModel>builder().
-                name(ProviderUtils.generateKey(serviceModel.getServiceName(), serviceModel.getServiceVersion()))
+        ServiceInstance<ServiceModel> serviceInstance =
+                ServiceInstance.<ServiceModel>builder()
+                // todo
+                .name(serviceModel.getServiceName())
                 .address(serviceModel.getAddress())
-                .port(serviceModel.getServicePort())
+                .port(serviceModel.getPort())
                 .payload(serviceModel)
                 .uriSpec(new UriSpec("{scheme}://{address}:{port}"))
                 .build();
@@ -68,12 +73,14 @@ public class ZookeeperServiceRegistry implements ServiceRegistry {
 
     @Override
     public ServiceModel discovery(String serviceName) throws Exception{
+        // 读取缓存
         ServiceProvider<ServiceModel> serviceProvider = serviceProviderCache.get(serviceName);
         if (null == serviceProvider) {
             synchronized (lock) {
                 serviceProvider = serviceDiscovery
                         .serviceProviderBuilder()
                         .serviceName(serviceName)
+                        //设置负载均衡策略，这里使用轮询
                         .providerStrategy(new RoundRobinStrategy<>())
                         .build();
                 serviceProvider.start();

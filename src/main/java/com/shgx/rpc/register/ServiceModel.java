@@ -12,7 +12,7 @@ public class ServiceModel {
     private String serviceName;
     private String serviceVersion;
     private String address;
-    private int servicePort;
+    private int port;
 
     public static ServiceModel builder() {
         return new ServiceModel();
@@ -25,7 +25,7 @@ public class ServiceModel {
 
 
     public ServiceModel servicePort(int servicePort) {
-        this.servicePort = servicePort;
+        this.port = servicePort;
         return this;
     }
 
@@ -46,7 +46,7 @@ public class ServiceModel {
                 "serviceName='" + serviceName + '\'' +
                 ", serviceVersion='" + serviceVersion + '\'' +
                 ", address='" + address + '\'' +
-                ", port=" + servicePort +
+                ", port=" + port +
                 '}';
     }
 }
