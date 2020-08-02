@@ -34,7 +34,6 @@ rpc.service-registry-address=127.0.0.1:2181
 public class HelloServiceImpl implements HelloService {
     @Override
     public String hello(String param) {
-        System.out.println("hello");
         return "hello, " + param;
     }
 }
@@ -43,7 +42,7 @@ public class HelloServiceImpl implements HelloService {
 5. 服务调用
 
 ```java
-@Controller
+@RestController
 public class HelloController {
 
     @MyConsumer(version = "0.0.1")
@@ -55,6 +54,10 @@ public class HelloController {
     }
 }
 ```
+
+6. 参考demo
+
+[测试demo](./test-rpc)
 
 ### 参考文档
 
