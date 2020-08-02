@@ -22,11 +22,11 @@ public class ProviderAutoConfiguration {
     private RpcProperties properties;
 
     @Bean
-    public Provider init() throws Exception {
+    public RpcProvider init() throws Exception {
         // 根据配置选择注册中心
         ServiceRegistryType type = ServiceRegistryType.valueOf(properties.getServiceRegistryType());
         // 单例模式
         ServiceRegistry serviceRegistry = ServiceRegistryFactory.getInstance(type, properties.getServiceRegistryAddress());
-        return new Provider(properties.getServiceAddress(), serviceRegistry);
+        return new RpcProvider(properties.getServiceAddress(), serviceRegistry);
     }
 }

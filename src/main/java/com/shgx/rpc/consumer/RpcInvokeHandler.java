@@ -1,7 +1,7 @@
 package com.shgx.rpc.consumer;
 
-import com.shgx.rpc.ptotocol.Request;
-import com.shgx.rpc.ptotocol.Response;
+import com.shgx.rpc.ptotocol.RpcRequest;
+import com.shgx.rpc.ptotocol.RpcResponse;
 import com.shgx.rpc.register.ServiceRegistry;
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,13 +45,13 @@ public class RpcInvokeHandler<T> implements InvocationHandler {
                 throw new IllegalStateException(String.valueOf(method));
             }
         }
-        Request request = new Request();
-        request.setRequestId(UUID.randomUUID().toString());
-        request.setClassName(method.getDeclaringClass().getName());
-        request.setServiceVersion(this.serviceVersion);
-        request.setMethodName(method.getName());
-        request.setParameterTypes(method.getParameterTypes());
-        request.setParameters(args);
+        RpcRequest rpcRequest = new RpcRequest();
+        rpcRequest.setRequestId(UUID.randomUUID().toString());
+        rpcRequest.setClassName(method.getDeclaringClass().getName());
+        rpcRequest.setServiceVersion(this.serviceVersion);
+        rpcRequest.setMethodName(method.getName());
+        rpcRequest.setParameterTypes(method.getParameterTypes());
+        rpcRequest.setParameters(args);
 
         log.debug(method.getDeclaringClass().getName());
         log.debug(method.getName());
@@ -62,11 +62,11 @@ public class RpcInvokeHandler<T> implements InvocationHandler {
             log.debug(args[i].toString());
         }
 
-        Consumer consumer = new Consumer(this.serviceRegistry);
-        Response response = consumer.sendRequest(request);
-        if(null != response){
-            log.debug("consumer receive provider rpc response:" + response.toString());
-            return response.getResult();
+        RpcConsumer rpcConsumer = new RpcConsumer(this.serviceRegistry);
+        RpcResponse rpcResponse = rpcConsumer.sendRequest(rpcRequest);
+        if(null != rpcResponse){
+            log.debug("consumer receive provider rpc response:" + rpcResponse.toString());
+            return rpcResponse.getResult();
         }else{
             throw new RuntimeException("consumer rpc fail, response is null!");
         }

@@ -36,30 +36,30 @@ import static com.shgx.rpc.constants.Constants.PROVIDER_THREAD_POOL_QUEUE_LEN;
  * @create: 2020/06/11
  */
 @Slf4j
-public class Provider implements InitializingBean, BeanPostProcessor {
+public class RpcProvider implements InitializingBean, BeanPostProcessor {
 
     private static ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("rpc-pool-%d").build();
-    private static ThreadPoolExecutor threadPoolexecutor;
+    private static ThreadPoolExecutor threadPoolExecutor;
     private String serverAddress;
     private ServiceRegistry serviceRegistry;
     private Map<String, Object> handlerMap = new HashMap<>(256);
     private EventLoopGroup bossGroup = null;
     private EventLoopGroup workerGroup = null;
 
-    public Provider(String serverAddress) {
+    public RpcProvider(String serverAddress) {
         this.serverAddress = serverAddress;
     }
 
-    public Provider(String serverAddress, ServiceRegistry serviceRegistry) {
+    public RpcProvider(String serverAddress, ServiceRegistry serviceRegistry) {
         this.serverAddress = serverAddress;
         this.serviceRegistry = serviceRegistry;
     }
 
     public static void submit(Runnable task) {
-        if (threadPoolexecutor == null) {
-            synchronized (Provider.class) {
-                if (threadPoolexecutor == null) {
-                    threadPoolexecutor = new ThreadPoolExecutor(PROVIDER_THREAD_POOL_NUM,
+        if (threadPoolExecutor == null) {
+            synchronized (RpcProvider.class) {
+                if (threadPoolExecutor == null) {
+                    threadPoolExecutor = new ThreadPoolExecutor(PROVIDER_THREAD_POOL_NUM,
                             PROVIDER_THREAD_POOL_NUM,
                             600L,
                             TimeUnit.SECONDS,
@@ -68,7 +68,7 @@ public class Provider implements InitializingBean, BeanPostProcessor {
                 }
             }
         }
-        threadPoolexecutor.submit(task);
+        threadPoolExecutor.submit(task);
     }
 
     @Override

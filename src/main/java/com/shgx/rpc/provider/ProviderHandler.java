@@ -1,8 +1,8 @@
 package com.shgx.rpc.provider;
 
 import com.shgx.rpc.commons.ProviderUtils;
-import com.shgx.rpc.ptotocol.Request;
-import com.shgx.rpc.ptotocol.Response;
+import com.shgx.rpc.ptotocol.RpcRequest;
+import com.shgx.rpc.ptotocol.RpcResponse;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -16,7 +16,7 @@ import java.util.Map;
  * @create: 2020/06/11
  */
 @Slf4j
-public class ProviderHandler extends SimpleChannelInboundHandler<Request> {
+public class ProviderHandler extends SimpleChannelInboundHandler<RpcRequest> {
 
     private final Map<String, Object> handlerMap;
 
@@ -27,39 +27,39 @@ public class ProviderHandler extends SimpleChannelInboundHandler<Request> {
     /**
      * rpc请求处理器
      * @param channelHandlerContext
-     * @param request
+     * @param rpcRequest
      * @throws Exception
      */
     @Override
-    protected void channelRead0(ChannelHandlerContext channelHandlerContext, Request request) throws Exception {
-        Provider.submit(() -> {
-            log.debug("Receive request {}", request.getRequestId());
-            Response response = new Response();
-            response.setRequestId(request.getRequestId());
+    protected void channelRead0(ChannelHandlerContext channelHandlerContext, RpcRequest rpcRequest) throws Exception {
+        RpcProvider.submit(() -> {
+            log.debug("Receive request {}", rpcRequest.getRequestId());
+            RpcResponse rpcResponse = new RpcResponse();
+            rpcResponse.setRequestId(rpcRequest.getRequestId());
             try {
-                Object result = handle(request);
-                response.setResult(result);
+                Object result = handle(rpcRequest);
+                rpcResponse.setResult(result);
             } catch (Throwable throwable) {
-                response.setException(throwable.toString());
+                rpcResponse.setException(throwable.toString());
                 log.error("Rpc server handle request error", throwable);
             }
-            channelHandlerContext.writeAndFlush(response)
-                    .addListener((ChannelFutureListener) channelFuture -> log.debug("send response for request:" + request.getRequestId()));
+            channelHandlerContext.writeAndFlush(rpcResponse)
+                    .addListener((ChannelFutureListener) channelFuture -> log.debug("send response for request:" + rpcRequest.getRequestId()));
         });
     }
 
-    private Object handle(Request request) throws Throwable {
-        String providerKey = ProviderUtils.generateKey(request.getClassName(), request.getServiceVersion());
+    private Object handle(RpcRequest rpcRequest) throws Throwable {
+        String providerKey = ProviderUtils.generateKey(rpcRequest.getClassName(), rpcRequest.getServiceVersion());
         Object providerBean = handlerMap.get(providerKey);
 
         if (null == providerBean) {
-            throw new RuntimeException(String.format("Provider not exist: %s:%s", request.getClassName(), request.getMethodName()));
+            throw new RuntimeException(String.format("Provider not exist: %s:%s", rpcRequest.getClassName(), rpcRequest.getMethodName()));
         }
 
         Class<?> providerClass = providerBean.getClass();
-        String methodName = request.getMethodName();
-        Class<?>[] parameterTypes = request.getParameterTypes();
-        Object[] parameters = request.getParameters();
+        String methodName = rpcRequest.getMethodName();
+        Class<?>[] parameterTypes = rpcRequest.getParameterTypes();
+        Object[] parameters = rpcRequest.getParameters();
 
         log.debug(providerClass.getName());
         log.debug(methodName);

@@ -9,7 +9,7 @@ import java.io.Serializable;
  * @create: 2020/06/11
  */
 @Data
-public class Response implements Serializable {
+public class RpcResponse implements Serializable {
 
     private String requestId;
     private Object result;

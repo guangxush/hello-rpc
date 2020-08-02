@@ -16,7 +16,7 @@ public class RpcDecoder extends ByteToMessageDecoder{
     }
 
     @Override
-    protected final void decode(ChannelHandlerContext channelHandlerContext, ByteBuf in, List<Object> out)throws Exception{
+    protected final void decode(ChannelHandlerContext channelHandlerContext, ByteBuf in, List<Object> out){
         if (in.readableBytes() < 4) {
             return;
         }

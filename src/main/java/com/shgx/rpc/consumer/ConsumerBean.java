@@ -54,7 +54,7 @@ public class ConsumerBean implements FactoryBean {
     }
 
     public void init() throws Exception {
-        this.object = Consumer.create(interfaceClass, serviceVersion, ServiceRegistryFactory.getInstance(
+        this.object = RpcConsumer.create(interfaceClass, serviceVersion, ServiceRegistryFactory.getInstance(
                 ServiceRegistryType.valueOf(registryType), registryAddress
         ));
         log.info("RpcConsumerBean {} init ...", interfaceClass.getName());

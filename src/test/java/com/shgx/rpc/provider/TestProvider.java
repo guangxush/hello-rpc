@@ -15,11 +15,11 @@ public class TestProvider {
         String serverAddress = "127.0.0.1:6688";
         String registryAddress = "127.0.0.1:2181";
 
-        Provider provider = new Provider(serverAddress, ServiceRegistryFactory.getInstance(ServiceRegistryType.zookeeper, registryAddress));
+        RpcProvider rpcProvider = new RpcProvider(serverAddress, ServiceRegistryFactory.getInstance(ServiceRegistryType.zookeeper, registryAddress));
         HelloService helloService = new HelloServiceImpl();
-        provider.addService(helloService, serverAddress);
+        rpcProvider.addService(helloService, serverAddress);
         try {
-            provider.start();
+            rpcProvider.start();
         } catch (Exception e) {
             log.error("exception:", e);
         }

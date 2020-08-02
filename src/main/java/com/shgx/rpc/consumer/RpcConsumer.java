@@ -1,8 +1,8 @@
 package com.shgx.rpc.consumer;
 
 import com.shgx.rpc.commons.ProviderUtils;
-import com.shgx.rpc.ptotocol.Request;
-import com.shgx.rpc.ptotocol.Response;
+import com.shgx.rpc.ptotocol.RpcRequest;
+import com.shgx.rpc.ptotocol.RpcResponse;
 import com.shgx.rpc.ptotocol.RpcDecoder;
 import com.shgx.rpc.ptotocol.RpcEncoder;
 import com.shgx.rpc.register.ServiceModel;
@@ -20,15 +20,15 @@ import java.lang.reflect.Proxy;
  * @create: 2020/06/11
  */
 @Slf4j
-public class Consumer extends SimpleChannelInboundHandler<Response> {
+public class RpcConsumer extends SimpleChannelInboundHandler<RpcResponse> {
 
     private final Object obj = new Object();
     private ServiceRegistry serviceRegistry;
     private EventLoopGroup eventLoopGroup = new NioEventLoopGroup(4);
     private Channel channel;
-    private Response response;
+    private RpcResponse rpcResponse;
 
-    public Consumer(ServiceRegistry serviceRegistry) {
+    public RpcConsumer(ServiceRegistry serviceRegistry) {
         this.serviceRegistry = serviceRegistry;
     }
 
@@ -40,7 +40,7 @@ public class Consumer extends SimpleChannelInboundHandler<Response> {
                 new RpcInvokeHandler<>(serviceVersion, serviceRegistry));
     }
 
-    public Response sendRequest(Request request)throws Exception{
+    public RpcResponse sendRequest(RpcRequest rpcRequest)throws Exception{
         try{
             Bootstrap bootstrap = new Bootstrap();
             bootstrap.group(eventLoopGroup).channel(NioSocketChannel.class)
@@ -52,10 +52,10 @@ public class Consumer extends SimpleChannelInboundHandler<Response> {
                             channel.pipeline()
                                     .addLast(new RpcEncoder())
                                     .addLast(new RpcDecoder())
-                                    .addLast(Consumer.this);
+                                    .addLast(RpcConsumer.this);
                         }
                     });
-            String targetService = ProviderUtils.generateKey(request.getClassName(), request.getServiceVersion());
+            String targetService = ProviderUtils.generateKey(rpcRequest.getClassName(), rpcRequest.getServiceVersion());
             ServiceModel serviceModel = serviceRegistry.discovery(targetService);
             if(serviceModel == null){
                 // 没有服务的提供方
@@ -75,21 +75,21 @@ public class Consumer extends SimpleChannelInboundHandler<Response> {
                 }
             });
             this.channel = future.channel();
-            this.channel.writeAndFlush(request).sync();
+            this.channel.writeAndFlush(rpcRequest).sync();
 
             synchronized (this.obj){
                 this.obj.wait();
             }
 
-            return this.response;
+            return this.rpcResponse;
         }finally {
             close();
         }
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext channelHandlerContext, Response response) throws Exception {
-        this.response = response;
+    protected void channelRead0(ChannelHandlerContext channelHandlerContext, RpcResponse rpcResponse) throws Exception {
+        this.rpcResponse = rpcResponse;
 
         synchronized (obj){
             // 收到响应， 唤醒线程
