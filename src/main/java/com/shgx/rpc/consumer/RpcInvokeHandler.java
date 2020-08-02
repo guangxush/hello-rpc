@@ -35,14 +35,16 @@ public class RpcInvokeHandler<T> implements InvocationHandler {
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         if (Object.class == method.getDeclaringClass()) {
             String name = method.getName();
-            if (EQUALS.equals(name)) {
-                return proxy == args[0];
-            } else if (HASH_CODE.equals(name)) {
-                System.identityHashCode(proxy);
-            } else if (TO_STRING.equals(name)) {
-                return proxy.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(proxy)) + ", with InvocationHandler" + this;
-            }else{
-                throw new IllegalStateException(String.valueOf(method));
+            switch (name) {
+                case EQUALS:
+                    return proxy == args[0];
+                case HASH_CODE:
+                    System.identityHashCode(proxy);
+                    break;
+                case TO_STRING:
+                    return proxy.getClass().getName() + "@" + Integer.toHexString(System.identityHashCode(proxy)) + ", with InvocationHandler" + this;
+                default:
+                    throw new IllegalStateException(String.valueOf(method));
             }
         }
         RpcRequest rpcRequest = new RpcRequest();
@@ -58,8 +60,8 @@ public class RpcInvokeHandler<T> implements InvocationHandler {
         for(int i=0;i<method.getParameterTypes().length;i++){
             log.debug(method.getParameterTypes()[i].getName());
         }
-        for(int i=0;i<args.length;i++){
-            log.debug(args[i].toString());
+        for (Object arg : args) {
+            log.debug(arg.toString());
         }
 
         RpcConsumer rpcConsumer = new RpcConsumer(this.serviceRegistry);

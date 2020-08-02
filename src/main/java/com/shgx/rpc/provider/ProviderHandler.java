@@ -48,30 +48,40 @@ public class ProviderHandler extends SimpleChannelInboundHandler<RpcRequest> {
         });
     }
 
+    /**
+     * 消息处理器核心实现
+     * @param rpcRequest
+     * @return
+     * @throws Throwable
+     */
     private Object handle(RpcRequest rpcRequest) throws Throwable {
+        // 生成服务注册key
         String providerKey = ProviderUtils.generateKey(rpcRequest.getClassName(), rpcRequest.getServiceVersion());
+        // 从缓存中获取相关的bean，缓存map的注册在RpcProvider中实现
         Object providerBean = handlerMap.get(providerKey);
-
         if (null == providerBean) {
+            // 没有获取到当前bean服务
             throw new RuntimeException(String.format("Provider not exist: %s:%s", rpcRequest.getClassName(), rpcRequest.getMethodName()));
         }
 
+        // 使用反射完成消息处理
         Class<?> providerClass = providerBean.getClass();
         String methodName = rpcRequest.getMethodName();
         Class<?>[] parameterTypes = rpcRequest.getParameterTypes();
         Object[] parameters = rpcRequest.getParameters();
-
+        // 打印类名
         log.debug(providerClass.getName());
+        // 打印方法名
         log.debug(methodName);
-
-        for (int i = 0; i < parameterTypes.length; i++) {
-            log.debug(parameterTypes[i].getName());
+        // 打印参数类型
+        for (Class<?> parameterType : parameterTypes) {
+            log.debug(parameterType.getName());
         }
-
-        for (int i = 0; i < parameters.length; i++) {
-            log.debug(parameters[i].toString());
+        // 打印参数
+        for (Object parameter : parameters) {
+            log.debug(parameter.toString());
         }
-
+        // 使用Cglib创建服务生产者的代理对象，调用指定的方法
         FastClass providerFastClass = FastClass.create(providerClass);
         int methodIndex = providerFastClass.getIndex(methodName, parameterTypes);
         return providerFastClass.invoke(methodIndex, providerBean, parameters);

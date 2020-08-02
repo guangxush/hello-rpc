@@ -71,6 +71,10 @@ public class RpcProvider implements InitializingBean, BeanPostProcessor {
         threadPoolExecutor.submit(task);
     }
 
+    /**
+     * 后置处理，用于开启监听服务
+     * @throws Exception
+     */
     @Override
     public void afterPropertiesSet() throws Exception {
         new Thread(() -> {
@@ -82,7 +86,7 @@ public class RpcProvider implements InitializingBean, BeanPostProcessor {
         }
         ).start();
     }
-//
+//    另一种方式，实现Bean扫描
 //    @Override
 //    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 //        Map<String, Object> providerMap = applicationContext.getBeansWithAnnotation(MyProvider.class);
@@ -118,10 +122,13 @@ public class RpcProvider implements InitializingBean, BeanPostProcessor {
      */
     public void start() throws InterruptedException {
         if (bossGroup == null || workerGroup == null) {
+            // bossGroup线程的机制是多路复用, 都是NioEventLoopGroup，一个线程但是可以监听多个新连接
+            // bossGroup用来处理nio的Accept，worker处理nio的Read和Write事件
             bossGroup = new NioEventLoopGroup();
             workerGroup = new NioEventLoopGroup();
+            // ServerBootstrap是一个用来创建服务端Channel的工具类，创建出来的Channel用来接收进来的请求；只用来做面向连接的传输，像TCP/IP。
             ServerBootstrap bootstrap = new ServerBootstrap();
-            //通用平台使用NioServerSocketChannel；Linux使用EpollServerSocketChannel
+            //通用平台使用NioServerSocketChannel，Linux使用EpollServerSocketChannel
             bootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).childHandler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 protected void initChannel(SocketChannel socketChannel) throws Exception {
@@ -132,19 +139,20 @@ public class RpcProvider implements InitializingBean, BeanPostProcessor {
                             .addLast(new ProviderHandler(handlerMap));
                 }
             }).option(ChannelOption.SO_BACKLOG, 128)
-                    .childOption(ChannelOption.SO_KEEPALIVE, true);
+              .childOption(ChannelOption.SO_KEEPALIVE, true);
             String[] address = serverAddress.split(":");
             String host = address[0];
             int port = Integer.parseInt(address[1]);
-
+            // 绑定端口，开启服务监听请求
             ChannelFuture future = bootstrap.bind(host, port).sync();
             log.info("Server started on port {}", port);
+            // 同步等待，需要单独开启线程调用start方法
             future.channel().closeFuture().sync();
         }
     }
 
     /**
-     * 手动注册服务，便于测试
+     * 手动注册服务，为了测试功能
      * @param providerBean 服务提供方的bean
      * @param serverAddress 服务提供方地址
      */
@@ -182,31 +190,37 @@ public class RpcProvider implements InitializingBean, BeanPostProcessor {
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+        // 获取MyProvider修饰的bean
         MyProvider myProvider = bean.getClass().getAnnotation(MyProvider.class);
+        // 如果没有被修饰直接返回bean
         if(myProvider == null){
             return bean;
         }
+        // 获取注解后的服务名，版本号
         String serviceName = myProvider.serviceInterface().getName();
         String version = myProvider.serviceVersion();
         String providerKey = ProviderUtils.generateKey(serviceName, version);
-        //缓存provider bean到本地缓存中
+        // 缓存provider bean到本地缓存中
         handlerMap.put(providerKey, bean);
 
         // 服务注册到注册中心
         String[] address = serverAddress.split(":");
         String host = address[0];
         int port = Integer.parseInt(address[1]);
+        // 创建服务元数据
         ServiceModel serviceModel = ServiceModel.builder()
                 .address(host)
                 .serviceName(serviceName)
                 .servicePort(port)
                 .serviceVersion(version);
         try {
+            // 尝试注册服务到注册中心
             serviceRegistry.register(serviceModel);
             log.debug("register service... {}", serviceModel.toString());
         } catch (Exception e) {
             log.error("register fail {}", serviceModel.toString(), e);
         }
+        // 返回bean
         return bean;
     }
 }

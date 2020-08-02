@@ -33,10 +33,6 @@ public class ConsumerBean implements FactoryBean {
         return true;
     }
 
-    /**
-     * setter注入
-     * @param interfaceClass
-     */
     public void setInterfaceClass(Class<?> interfaceClass) {
         this.interfaceClass = interfaceClass;
     }

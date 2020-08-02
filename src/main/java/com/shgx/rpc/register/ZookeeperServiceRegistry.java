@@ -22,24 +22,24 @@ import static com.shgx.rpc.constants.Constants.BASE_URL;
  * @create: 2020/06/11
  */
 public class ZookeeperServiceRegistry implements ServiceRegistry {
-    private final CuratorFramework client;
+    private final CuratorFramework curatorFramework;
     private final Object lock = new Object();
     private ServiceDiscovery<ServiceModel> serviceDiscovery;
 
     /**
-     * 本地缓存服务，避免过多创建请求
+     * 提供本地缓存服务，避免过多创建请求
      */
     private Map<String, ServiceProvider<ServiceModel>> serviceProviderCache;
     private List<Closeable> closeableProvider = Lists.newArrayList();
 
     public ZookeeperServiceRegistry(String address) throws Exception {
         serviceProviderCache = new ConcurrentHashMap<>(256);
-        this.client = CuratorFrameworkFactory.newClient(address, new ExponentialBackoffRetry(1000, 3));
-        this.client.start();
+        this.curatorFramework = CuratorFrameworkFactory.newClient(address, new ExponentialBackoffRetry(1000, 3));
+        this.curatorFramework.start();
         JsonInstanceSerializer<ServiceModel> serializer = new JsonInstanceSerializer<>(ServiceModel.class);
         serviceDiscovery = ServiceDiscoveryBuilder.
                 builder(ServiceModel.class)
-                .client(this.client)
+                .client(this.curatorFramework)
                 .serializer(serializer)
                 .basePath(BASE_URL)
                 .build();
@@ -50,7 +50,7 @@ public class ZookeeperServiceRegistry implements ServiceRegistry {
     public void register(ServiceModel serviceModel) throws Exception {
         ServiceInstance<ServiceModel> serviceInstance = ServiceInstance
                 .<ServiceModel>builder()
-                //使用{服务名}:{服务版本}唯一标识一个服务
+                //使用{服务名}:{服务版本}来唯一标识一个服务
                 .name(ProviderUtils.generateKey(serviceModel.getServiceName(), serviceModel.getServiceVersion()))
                 .address(serviceModel.getAddress())
                 .port(serviceModel.getPort())

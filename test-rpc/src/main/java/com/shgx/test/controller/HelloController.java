@@ -19,7 +19,7 @@ public class HelloController {
 
     @GetMapping("/hello")
     public String testHello(@RequestParam String param){
-        // http://localhost:8081/hello?param=zhangsan
+        // http://localhost:8081/hello?param=rpc
         return helloService.hello(param);
     }
 
